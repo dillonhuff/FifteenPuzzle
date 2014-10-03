@@ -2,6 +2,7 @@ module Puzzle() where
 
 import Data.List as L
 import Data.Map as M
+import System.Random
 
 type Tile = Int
 type Location = (Int, Int)
@@ -63,3 +64,17 @@ legalMoves p = L.map (Move blankLoc) moveEnds
 
 doMove :: Puzzle -> Move -> Puzzle
 doMove p@(Puzzle m l) (Move start end) = Puzzle (M.insert start (tileAt p end) (M.insert end blank m)) end
+
+shufflePuzzle :: (RandomGen t) => t -> Int -> Puzzle -> Puzzle
+shufflePuzzle gen numMoves puzzle = fst $ recShufflePuzzle gen numMoves puzzle
+
+recShufflePuzzle :: (RandomGen t) => t -> Int -> Puzzle -> (Puzzle, t)
+recShufflePuzzle gen 0 p = (p, gen)
+recShufflePuzzle gen n p = recShufflePuzzle nextGen (n-1) movedPuzzle
+  where
+    possibleMoves = legalMoves p
+    nextMoveAndGen = randomR (0, (length possibleMoves) - 1) gen
+    nextGen = snd nextMoveAndGen
+    moveInd = fst nextMoveAndGen
+    move = possibleMoves !! moveInd
+    movedPuzzle = doMove p move
